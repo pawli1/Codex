@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PNG Transparency Creator – Free Online PNG Background Remover</title>
+
+  <!-- SEO -->
+  <meta name="description" content="Free online PNG transparency creator. Remove backgrounds, make PNGs transparent, bulk upload, color picker, and instant download. No signup required." />
+  <meta name="keywords" content="PNG transparency, transparent PNG, background remover, online PNG editor" />
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f7f7f7;
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 { margin-bottom: 0.25rem; }
+    p { color: #555; }
+
+    header { max-width: 1000px; text-align: center; margin-bottom: 2rem; }
+
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      max-width: 1100px;
+      width: 100%;
+    }
+
+    .panel {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+
+    canvas {
+      max-width: 100%;
+      border: 1px dashed #ccc;
+      margin-top: 0.5rem;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+
+    input[type=file], input[type=color], input[type=range] {
+      margin-top: 0.5rem;
+    }
+
+    button {
+      background: #000;
+      color: #fff;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: #444;
+    }
+
+    button:hover { opacity: 0.85; }
+
+    footer {
+      margin-top: 3rem;
+      color: #777;
+      font-size: 0.9rem;
+      max-width: 800px;
+      text-align: center;
+    }
+
+    @media (max-width: 900px) {
+      .container { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>PNG Transparency Creator</h1>
+  <p>Upload PNGs, remove backgrounds, and download transparent images instantly. Free & private.</p>
+</header>
+
+<div class="container">
+  <div class="panel">
+    <h3>Original Images</h3>
+    <input type="file" id="upload" accept="image/png" multiple />
+    <canvas id="sourceCanvas"></canvas>
+
+    <div class="controls">
+      <label>
+        🎨 Color
+        <input type="color" id="colorPicker" value="#ffffff" />
+      </label>
+
+      <label>
+        🎚️ Tolerance
+        <input type="range" id="tolerance" min="0" max="100" value="40" />
+      </label>
+
+      <button id="removeColor" class="secondary">Remove Selected Color</button>
+      <button id="removeWhite">🪄 Remove White</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Transparent PNG</h3>
+    <canvas id="outputCanvas"></canvas>
+    <button id="download">Download PNG</button>
+    <a id="githubDownload" href="" download="transparent.png" style="display:none;">Download for GitHub</a>
+    <a id="netlifyDownload" href="" download="transparent.png" style="display:none;">Download for Netlify</a>
+  </div>
+</div>
+
+<footer>
+  <p><strong>Why use this tool?</strong> Fast, free, no uploads stored, bulk PNG support, and instant transparency.</p>
+  <p>Perfect for logos, product photos, websites, and social media.</p>
+</footer>
+
+<script>
+  const upload = document.getElementById('upload');
+  const sourceCanvas = document.getElementById('sourceCanvas');
+  const outputCanvas = document.getElementById('outputCanvas');
+  const downloadBtn = document.getElementById('download');
+  const githubLink = document.getElementById('githubDownload');
+  const netlifyLink = document.getElementById('netlifyDownload');
+  const toleranceInput = document.getElementById('tolerance');
+  const colorPicker = document.getElementById('colorPicker');
+  const removeColorBtn = document.getElementById('removeColor');
+  const removeWhiteBtn = document.getElementById('removeWhite');
+
+  const srcCtx = sourceCanvas.getContext('2d');
+  const outCtx = outputCanvas.getContext('2d');
+
+  let img = new Image();
+  let currentImageData = null;
+
+  upload.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      img.onload = () => {
+        sourceCanvas.width = img.width;
+        sourceCanvas.height = img.height;
+        outputCanvas.width = img.width;
+        outputCanvas.height = img.height;
+
+        srcCtx.drawImage(img, 0, 0);
+        outCtx.drawImage(img, 0, 0);
+        currentImageData = srcCtx.getImageData(0, 0, img.width, img.height);
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  function removeColor(r, g, b) {
+    if (!currentImageData) return;
+    const data = new Uint8ClampedArray(currentImageData.data);
+    const tolerance = Number(toleranceInput.value);
+
+    for (let i = 0; i < data.length; i += 4) {
+      if (
+        Math.abs(data[i] - r) < tolerance &&
+        Math.abs(data[i + 1] - g) < tolerance &&
+        Math.abs(data[i + 2] - b) < tolerance
+      ) {
+        data[i + 3] = 0;
+      }
+    }
+
+    const result = new ImageData(data, currentImageData.width, currentImageData.height);
+    outCtx.putImageData(result, 0, 0);
+  }
+
+  removeColorBtn.addEventListener('click', () => {
+    const hex = colorPicker.value;
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    removeColor(r, g, b);
+  });
+
+  removeWhiteBtn.addEventListener('click', () => removeColor(255, 255, 255));
+
+  function updateDownloadLinks() {
+    const dataURL = outputCanvas.toDataURL('image/png');
+    githubLink.href = dataURL;
+    netlifyLink.href = dataURL;
+    githubLink.style.display = 'inline-block';
+    netlifyLink.style.display = 'inline-block';
+  }
+
+  downloadBtn.addEventListener('click', () => {
+    if (!outputCanvas.width || !outputCanvas.height) {
+      alert('No image to download yet.');
+      return;
+    }
+
+    const dataURL = outputCanvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.href = dataURL;
+    link.download = 'transparent.png';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Update GitHub and Netlify links
+    updateDownloadLinks();
+  });
+</script>
+
+</body>
+</html>
