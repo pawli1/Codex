@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Packman Arcade</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="game-shell">
+      <h1>Packman Arcade</h1>
+      <div class="hud">
+        <span>Score: <strong id="score">0</strong></span>
+        <span>Lives: <strong id="lives">3</strong></span>
+        <span id="state">Collect all pellets!</span>
+      </div>
+      <canvas id="game" width="560" height="620" aria-label="Packman game board"></canvas>
+      <p class="help">Use arrow keys or WASD to move. Eat power pellets to turn ghosts blue.</p>
+    </main>
+    <script src="game.js"></script>
+  </body>
+</html>
